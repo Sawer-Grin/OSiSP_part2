@@ -1,7 +1,7 @@
 [
 {
-  "directory": "D:/Study/OSiSP_part2/Laba_1/build",
-  "command": "C:\\MinGW\\bin\\g++.exe   -g -o CMakeFiles\\Laba_1.dir\\main.cpp.obj -c D:\\Study\\OSiSP_part2\\Laba_1\\main.cpp",
-  "file": "D:/Study/OSiSP_part2/Laba_1/main.cpp"
+  "directory": "/home/paulatreides/Study/Osisp/OSiSP_part2/Laba_1/build",
+  "command": "/usr/bin/x86_64-w64-mingw32-g++ -I/usr/x86_64-w64-mingw32/sys-root/mingw/include -g -o CMakeFiles/Laba_1.dir/main.cpp.o -c /home/paulatreides/Study/Osisp/OSiSP_part2/Laba_1/main.cpp",
+  "file": "/home/paulatreides/Study/Osisp/OSiSP_part2/Laba_1/main.cpp"
 }
 ]

@@ -11,7 +11,7 @@ const char g_szClassName[] = "myWindowClass";
 struct _pos{
     int x;
     int y;
-};
+};  
 
 
 struct _pos pos;
@@ -91,7 +91,7 @@ void DrawSprite(HWND hwnd, LPPAINTSTRUCT lpPS){
     hbmMem = CreateCompatibleBitmap(lpPS->hdc,
                                     rcUser.right-rcUser.left,
                                     rcUser.bottom-rcUser.top);
-    hbmOld = SelectObject(hdcMem, hbmMem);
+    hbmOld = (HBITMAP)SelectObject(hdcMem, hbmMem);
 
     hbrBkGnd = CreateSolidBrush(GetSysColor(COLOR_WINDOW));
     FillRect(hdcMem, &rcUser, hbrBkGnd);
@@ -107,7 +107,7 @@ void DrawSprite(HWND hwnd, LPPAINTSTRUCT lpPS){
     processPos(rcUser, bm.bmHeight, bm.bmWidth);
 
     HDC hdcSprite = CreateCompatibleDC(hdcMem);
-    HBITMAP oldSprite = SelectObject(hdcSprite, hBitmap);
+    HBITMAP oldSprite = (HBITMAP)SelectObject(hdcSprite, hBitmap);
     BitBlt(hdcMem, pos.x,pos.y, pos.x + bm.bmWidth, pos.y + bm.bmHeight, hdcSprite, 0,0, SRCCOPY);
     DeleteDC(hdcSprite);
 
@@ -136,13 +136,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         break;
         case WM_ERASEBKGND:
             return (LRESULT)1;
-        case WM_PAINT:
+        case WM_PAINT: {
             HDC hdc = BeginPaint(hwnd, &ps);
             DrawSprite(hwnd, &ps);
             EndPaint(hwnd, &ps);
             if (isAuto)
                 InvalidateRect(hwnd, NULL, 0);
-        break;
+            break;
+        }
         case WM_KEYDOWN:
             if (wParam == VK_LEFT){
                 pos.x -= speed;
