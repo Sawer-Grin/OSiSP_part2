@@ -5,17 +5,27 @@
 #include <math.h>
 
 #define BMP_FILE "for-test.bmp"
+#define MASK "mask.bmp"
 
 const char g_szClassName[] = "myWindowClass";
+const int default_speed = 10;
+const int increment_for_speed = 3;
 
 struct _pos{
     int x;
     int y;
 };  
-
+enum way {
+    UP,
+    DOWN,
+    LEFT,
+    RIGHT,
+    NONE,
+};
 
 struct _pos pos;
 int speed = 10;
+way direction = way::NONE;
 
 int isAuto = 0;
 float xSpeed = 10;
@@ -24,6 +34,22 @@ float realX = 0;
 float realY = 0;
 
 HBITMAP hBitmap = NULL;
+HBITMAP mask = NULL;
+
+void change_speed(way should_be_direction){
+    if (direction == should_be_direction){
+        speed += increment_for_speed;
+    }
+    else {
+        direction = should_be_direction;
+        speed = default_speed;
+    }
+}
+
+void set_default_setting() {
+    speed = default_speed;
+    direction = way::NONE;
+}
 
 
 float getSpeedByScreen(HWND hwnd){
@@ -42,16 +68,20 @@ void processPos(RECT rc, int bmHeight, int bmWidth){
     int height = rc.bottom - rc.top - bmHeight;
 
     if (pos.x > width){
-        pos.x = width;
+        pos.x = width - speed;
+        set_default_setting();
     }
     if (pos.y > height){
-        pos.y = height;
+        pos.y = height - speed;
+        set_default_setting();
     }
     if (pos.y < 0){
-        pos.y = 1;
+        pos.y = speed;
+        set_default_setting();
     }
     if (pos.x < 0){
-        pos.x = 1;
+        pos.x = speed;
+        set_default_setting();
     }
 
     if (isAuto == 0){
@@ -82,7 +112,7 @@ void changePosOrSpeedInAuto(RECT rc, int bmHeight, int bmWidth){
 void DrawSprite(HWND hwnd, LPPAINTSTRUCT lpPS){
     RECT rcUser;
     HDC hdcMem;
-    HBITMAP hbmMem, hbmOld;
+    HBITMAP hbmMem, hbmOld, bmp_mask;
     HBRUSH hbrBkGnd;
 
     GetClientRect(hwnd, &rcUser);
@@ -97,8 +127,9 @@ void DrawSprite(HWND hwnd, LPPAINTSTRUCT lpPS){
     FillRect(hdcMem, &rcUser, hbrBkGnd);
     DeleteObject(hbrBkGnd);
 
-    BITMAP bm;
+    BITMAP bm, bm_mask;
     GetObject(hBitmap, sizeof(bm), &bm);
+    GetObject(mask, sizeof(bm_mask), &bm_mask);
 
     if (isAuto){
         changePosOrSpeedInAuto(rcUser, bm.bmHeight, bm.bmWidth);
@@ -107,10 +138,12 @@ void DrawSprite(HWND hwnd, LPPAINTSTRUCT lpPS){
     processPos(rcUser, bm.bmHeight, bm.bmWidth);
 
     HDC hdcSprite = CreateCompatibleDC(hdcMem);
-    HBITMAP oldSprite = (HBITMAP)SelectObject(hdcSprite, hBitmap);
+    HBITMAP oldSprite = (HBITMAP)SelectObject(hdcSprite, /*hBitmap*/ mask);
     BitBlt(hdcMem, pos.x,pos.y, pos.x + bm.bmWidth, pos.y + bm.bmHeight, hdcSprite, 0,0, SRCCOPY);
-    DeleteDC(hdcSprite);
 
+    oldSprite = (HBITMAP)SelectObject(hdcSprite, hBitmap);
+    BitBlt(hdcMem, pos.x,pos.y, pos.x + bm.bmWidth, pos.y + bm.bmHeight, hdcSprite, 0,0, SRCPAINT);
+    DeleteDC(hdcSprite);
     BitBlt(lpPS->hdc,
            rcUser.left, rcUser.top,
            rcUser.right-rcUser.left, rcUser.bottom-rcUser.top,
@@ -133,6 +166,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             pos.x = 0;
             pos.y = 0;
             hBitmap = (HBITMAP)LoadImage(NULL, BMP_FILE, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+            mask = (HBITMAP)LoadImage(NULL, MASK, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
         break;
         case WM_ERASEBKGND:
             return (LRESULT)1;
@@ -146,15 +180,19 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         }
         case WM_KEYDOWN:
             if (wParam == VK_LEFT){
+                change_speed(way::LEFT);
                 pos.x -= speed;
             }
             else if (wParam == VK_RIGHT){
+                change_speed(way::RIGHT);
                 pos.x += speed;
             }
             else if (wParam == VK_UP){
+                change_speed(way::UP);
                 pos.y -= speed;
             }
             else if (wParam == VK_DOWN){
+                change_speed(way::DOWN);
                 pos.y += speed;
             }
             isAuto = 0;
