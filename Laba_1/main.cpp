@@ -8,8 +8,9 @@
 #define MASK "mask.bmp"
 
 const char g_szClassName[] = "myWindowClass";
-const int default_speed = 10;
-const int increment_for_speed = 3;
+const int default_speed = 0;
+const int increment_for_speed = 5;
+int temp_inc_for_speed = increment_for_speed;
 
 struct _pos{
     int x;
@@ -38,16 +39,18 @@ HBITMAP mask = NULL;
 
 void change_speed(way should_be_direction){
     if (direction == should_be_direction){
-        speed += increment_for_speed;
+        speed += temp_inc_for_speed;
     }
     else {
         direction = should_be_direction;
-        speed = default_speed;
+        speed = 0;
+        temp_inc_for_speed = increment_for_speed;
     }
 }
 
 void set_default_setting() {
-    speed = default_speed;
+    temp_inc_for_speed = -temp_inc_for_speed;
+    speed = -speed;
     direction = way::NONE;
 }
 
@@ -70,18 +73,22 @@ void processPos(RECT rc, int bmHeight, int bmWidth){
     if (pos.x > width){
         pos.x = width - speed;
         set_default_setting();
+        direction = way::NONE;
     }
     if (pos.y > height){
         pos.y = height - speed;
         set_default_setting();
+        direction = way::NONE;
     }
     if (pos.y < 0){
         pos.y = speed;
         set_default_setting();
+        direction = way::NONE;
     }
     if (pos.x < 0){
         pos.x = speed;
         set_default_setting();
+        direction = way::NONE;
     }
 
     if (isAuto == 0){
