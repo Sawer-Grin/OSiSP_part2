@@ -1,0 +1,1 @@
+/usr/bin/x86_64-w64-mingw32-g++  -std=c++1y -Wall CMakeFiles/cmake_example_3.dir/src/main.cpp.o -o cmake_example_3  -Wl,-rpath,/home/paulatreides/Study/Osisp/OSiSP_part2/Laba_3/lesson_3/shared_lib/build libcmake_example_3_lib.so -static 

@@ -1,0 +1,1 @@
+/usr/bin/x86_64-w64-mingw32-g++ -fPIC  -std=c++1y -Wall -shared -Wl,-soname,libcmake_example_3_lib.so -o libcmake_example_3_lib.so CMakeFiles/cmake_example_3_lib.dir/lib_src/sLibrary.cpp.o 

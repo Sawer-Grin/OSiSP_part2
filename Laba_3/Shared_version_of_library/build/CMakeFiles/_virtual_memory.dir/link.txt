@@ -1,0 +1,1 @@
+/usr/bin/x86_64-w64-mingw32-g++ -fPIC -shared -Wl,-soname,lib_virtual_memory.so -o lib_virtual_memory.so CMakeFiles/_virtual_memory.dir/library.cpp.o   -L/usr/x86_64-w64-mingw32/sys-root/mingw/lib 

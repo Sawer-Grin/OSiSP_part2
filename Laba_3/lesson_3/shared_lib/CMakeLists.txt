@@ -27,11 +27,12 @@ configure_file(
 
 include_directories("${PROJECT_BINARY_DIR}")
 include_directories("${PROJECT_SOURCE_DIR}/include")
+include_directories("/usr/x86_64-w64-mingw32/sys-root/mingw/include/")
 
 #-------------------- Create a library -----------------------------------------
 #Generate the shared library from the library sources
 #-------------------------------------------------------------------------------
-add_library(${PROJECT_NAME}_lib SHARED 
+add_library(${PROJECT_NAME}_lib SHARED
             lib_src/sLibrary.cpp
           )
           
@@ -46,10 +47,11 @@ target_include_directories(${PROJECT_NAME}_lib
 file(GLOB 
           CPP_SOURCES "src/*.cpp")
           
-add_executable(${PROJECT_NAME} ${CPP_SOURCES})
+add_executable(${PROJECT_NAME} WIN32 ${CPP_SOURCES})
 
 # link the new library target with the binary target
 target_link_libraries( ${PROJECT_NAME}
     PRIVATE 
         ${PROJECT_NAME}_lib::lib_1
+    -static
 )

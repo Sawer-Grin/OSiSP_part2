@@ -1,132 +1,102 @@
 #include <windows.h>
-#include <windowsx.h>
-#include <stdio.h>
-#include <commctrl.h>
-#include <tchar.h>
+#include <iostream>
 
 #define amount_in_line 4
 #define amount_in_column 5
 #define default_height_line_text 20
 
+std::string test_string = std::string("Hello, world");
+
 const char g_szClassName[] = "myWindowClass";
 int size_width = 500;
 int size_height = 500;
 
-int position_scroll = 0;
-SCROLLINFO scroll;
+bool replace_string_in_process(DWORD pId, const char *string_for_replacing, const char *replaced_string) {
 
-HWND table[amount_in_column][amount_in_line];
-
-void initialTable(HWND hwnd) {
-    RECT rect;
-    GetClientRect(hwnd, &rect);
-
-    int width = rect.right - rect.left;
-    int height = rect.bottom - rect.top;
-
-    int item_width = width / amount_in_line;
-    int item_height = default_height_line_text * 3;
-
-    for (int i = 0; i < amount_in_column; i++) {
-        for (int j = 0; j < amount_in_line; j++) {
-            int x  = j * item_width;
-            int y = i * item_height;
-
-            table[i][j] = CreateWindow("EDIT",
-                0, 
-                WS_BORDER | WS_CHILD | WS_VISIBLE | ES_LEFT | ES_MULTILINE,
-                x, y, item_width, item_height,
-                hwnd,
-                (HMENU)20,
-                (HINSTANCE) GetWindowLongPtr(hwnd, GWLP_HINSTANCE),
-                NULL
-            );
-        }
+    if (string_for_replacing == nullptr || replaced_string == nullptr) {
+        return false;
     }
-}
 
-void destroyTable(HWND hwnd) {
-    for (int i = 0; i < amount_in_column; i++) {
-        for (int j = 0; j < amount_in_line; j++) {
-            DestroyWindow(table[i][j]);
-        }
-    }
-}
+    char *str = new char[strlen(string_for_replacing) + 1];
+    strcpy_s(str, strlen(string_for_replacing) + 1, string_for_replacing);
+    SYSTEM_INFO si;
 
-int find_max_str_item(HWND table_line[]){
+    GetSystemInfo(&si);
 
-    int max_line = SendMessage(table_line[0], EM_GETLINECOUNT, NULL, NULL);
-    for (int i = 0; i < amount_in_line; i++) {
-        int temp = SendMessage(table_line[i], EM_GETLINECOUNT, NULL, NULL);
-        if (temp > max_line)
-            max_line = temp;
-    }
-    return max_line;
-}
+    DWORD old_pid = GetCurrentProcessId();
 
-void updateTable(HWND hwnd) {
-    RECT rect;
-    GetClientRect(hwnd, &rect);
+    HANDLE hProcess = OpenProcess(
+        PROCESS_QUERY_INFORMATION | PROCESS_VM_READ | PROCESS_VM_WRITE,
+        false,
+        pId
+    );
 
-    int width = rect.right - rect.left;
-    int height = rect.bottom - rect.top;
+    DWORD new_pid = GetProcessId(hProcess);
+    DWORD new_old_pid = GetCurrentProcessId();
 
-    int item_width = width / amount_in_line;
-    int y_now = 0;
+    std::cout << "Old pid: " << old_pid 
+        << " OpenProcessId: " << new_pid 
+        << " After open proccess: " << new_old_pid << std::endl;
 
-    for (int i = 0; i < amount_in_column; i++) {
-        int max_lines = find_max_str_item(table[i]);
-        int item_height = default_height_line_text * (
-            max_lines + 1
-        );
+    if (hProcess == nullptr) 
+        return false;
+    
+    MEMORY_BASIC_INFORMATION mbi = {};
 
-        for (int j = 0; j < amount_in_line; j++) {
-            int x = j * item_width;
-            MoveWindow(table[i][j], x, y_now - position_scroll, item_width, item_height, TRUE);
+    while (true) {
+        DWORD_PTR address = ((DWORD_PTR) mbi.BaseAddress + mbi.RegionSize);
+        VirtualQueryEx(hProcess, (void *) address, &mbi, sizeof(mbi));
+
+        if (!(mbi.Protect & (PAGE_READONLY | PAGE_READWRITE))){
+            if (address > (DWORD_PTR) si.lpMaximumApplicationAddress)
+                break;
+            continue;
         }
 
-        y_now += item_height;
+        BYTE *buf = new BYTE[mbi.RegionSize];
+        SIZE_T nBytes;
+
+        if (ReadProcessMemory(hProcess, mbi.BaseAddress, buf, mbi.RegionSize, &nBytes)) {
+
+            for (size_t i = 0; i < nBytes - strlen(str); i++) {
+                if (
+                    (((BYTE*) mbi.AllocationBase + i) != (BYTE*)str) && 
+                    !memcmp((CHAR *) buf + i, str, strlen(str))
+                ) {
+                    LPVOID str_address = (LPVOID)((BYTE*) mbi
+                        .BaseAddress+ i);
+                    std::cout << "Str: " << (char *) str_address << std::endl;
+
+                    if (!WriteProcessMemory(hProcess, str_address, replaced_string, 
+                        strlen(replaced_string) + 1, nullptr)) {
+                    
+                        DWORD errorCode = GetLastError();
+                        wchar_t sError[1024];
+                        FormatMessageW(
+                            FORMAT_MESSAGE_FROM_SYSTEM,
+                            nullptr,
+                            errorCode,
+                            MAKELANGID(
+                                LANG_ENGLISH,
+                                SUBLANG_ENGLISH_US
+                            ),
+                            sError,
+                            sizeof(sError) / sizeof(wchar_t),
+                            nullptr
+                        );
+                    }
+                    else {
+                        std::cout << "Successful result of changing string!!!!!!!" << std::endl;
+                        std::cout << "Shit == " << test_string << "But == "  << (char*)str_address << std::endl;
+                    }
+                }
+            }
+        }
+        delete[] buf;
     }
-}
+    delete[] str;
 
-int get_height_column(int amount_columns) {
-    RECT rect;
-    int height = 0;
-
-    for (int i = 0; i < amount_columns; i++) {
-        GetWindowRect(table[i][0], &rect);
-        height += (rect.bottom = rect.top);
-    }
-    return height;
-}
-
-void processScrolling(HWND hwnd, WPARAM wparam) {
-    SCROLLINFO temp_scroll;
-
-    temp_scroll.cbSize = sizeof(SCROLLINFO);
-    temp_scroll.fMask = SIF_ALL;
-
-    GetScrollInfo(hwnd, SB_VERT, &temp_scroll);
-    int pos = temp_scroll.nPos;
-
-    switch (LOWORD(wparam)) {
-        case SB_THUMBPOSITION:
-            pos = HIWORD(wparam);
-        break;
-        case SB_LINEDOWN:
-            pos++;
-        break;
-        case SB_LINEUP:
-            pos--;
-        break;
-    }
-
-    if (temp_scroll.nPos != pos) {
-        position_scroll = get_height_column(pos);
-        updateTable(hwnd);
-        SetScrollPos(hwnd, SB_VERT, pos, TRUE);
-    }
-
+    return true;
 }
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -136,33 +106,27 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     switch(msg)
     {
         case WM_CREATE:{
-            initialTable(hwnd);
+            std::cout << "Start checking Shit" << std::endl;
+            DWORD own_pid = GetCurrentProcessId();
+
+            replace_string_in_process(own_pid, "Hello, world", "Something");
             break;
         }
         case WM_SIZE:{
-            updateTable(hwnd);
-            InvalidateRect(hwnd, NULL, 0);
-            updateTable(hwnd);
             break;
         }
         case WM_COMMAND:{
-            if (HIWORD(wParam) == EN_CHANGE)
-                updateTable(hwnd);
             break;
         }
         case WM_GETMINMAXINFO:
         {
-            MINMAXINFO *pInfo = (MINMAXINFO *)lParam;
-            POINT ptMin = { 200, 200 };
-            pInfo->ptMinTrackSize = ptMin;
             break;
         }
         case WM_VSCROLL: {
-            processScrolling(hwnd, wParam);
             break;
         }
         case WM_CLOSE:
-            destroyTable(hwnd);
+            std::cout << 
             DestroyWindow(hwnd);
         break;
         case WM_DESTROY:
@@ -173,7 +137,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     }
     return DefWindowProc(hwnd, msg, wParam, lParam);
 }
-
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     LPSTR lpCmdLine, int nCmdShow)
@@ -207,19 +170,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     hwnd = CreateWindowEx(
         WS_EX_CLIENTEDGE,
         g_szClassName,
-        "Laba_2",
-        WS_OVERLAPPEDWINDOW | WS_VSCROLL,
+        "Laba_3",
+        WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT, CW_USEDEFAULT, size_width, size_height,
         NULL, NULL, hInstance, NULL);
-
-    SCROLLINFO scroll;
-    scroll.nPos = 0;
-    scroll.nMin = 0;
-    scroll.nMax = amount_in_column - 1;
-    scroll.nPage = 1;
-    scroll.fMask = SIF_ALL;
-
-    SetScrollInfo(hwnd, SB_VERT, &scroll, TRUE);
 
     if(hwnd == NULL)
     {
