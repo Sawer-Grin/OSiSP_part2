@@ -5,17 +5,29 @@ typedef BOOL (*ReplaceStringFunc)(DWORD pId,
                                   const char *stringToReplace,
                                   const char *replaceString);
 
-using namespace std;
-
 static char secret[] = "HELLO WORLD!!!!!";
+int aes = 4096;
+
+PVOID alloc_example(){
+    PVOID pvMem = VirtualAlloc(NULL,aes , MEM_COMMIT, PAGE_READWRITE);
+    memcpy(pvMem, secret, strlen(secret)+1);
+    printf("Start: %s\n", pvMem);
+    return pvMem;
+}
+
+void ReadAllocExample(PVOID ptr){
+    printf("End: %s\n", ptr);
+}
 
 int main()
 {
+    PVOID exPtr = alloc_example();
+    std::cout << "Here"<< std::endl;
     auto hLibrary = LoadLibraryA("lib_virtual_memory_shared.so");
 
     if (hLibrary == nullptr)
     {
-        cout << "Could not load library." << endl;
+        std::cout << "Could not load library." << std::endl;
         return 1;
     }
 
@@ -24,20 +36,22 @@ int main()
 
     if (func != nullptr)
     {
-        if (func(GetCurrentProcessId(), "HELLO WORLD!!!!!", "SUPER SECRET"))
+        if (func(GetCurrentProcessId(), secret, "SUPER SECRET"))
         {
-            cout << "Let's print string 'secret': " << secret << endl;
+            std::cout << "Correct"<< std::endl;
         }
         else
         {
-            cout << "Error while trying to replace string." << endl;
+            std::cout << "Error while trying to replace string." << std::endl;
         }
     }
     else
     {
-        cout << "Could not find function with name 'ReplaceStringInProcess'"
-             << endl;
+        std::cout << "Could not find function with name 'ReplaceStringInProcess'"
+             << std::endl;
     }
+
+    ReadAllocExample(exPtr);
 
     FreeModule(hLibrary);
 

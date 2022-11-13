@@ -1,1 +1,0 @@
-/usr/bin/x86_64-w64-mingw32-g++ CMakeFiles/Laba_1.dir/main.cpp.o -o Laba_1   -L/usr/x86_64-w64-mingw32/sys-root/mingw/lib  -Wl,-rpath,/usr/x86_64-w64-mingw32/sys-root/mingw/lib -lcomctl32 

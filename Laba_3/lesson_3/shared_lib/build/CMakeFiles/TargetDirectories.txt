@@ -1,4 +1,0 @@
-/home/paulatreides/Study/Osisp/OSiSP_part2/Laba_3/lesson_3/shared_lib/build/CMakeFiles/cmake_example_3_lib.dir
-/home/paulatreides/Study/Osisp/OSiSP_part2/Laba_3/lesson_3/shared_lib/build/CMakeFiles/cmake_example_3.dir
-/home/paulatreides/Study/Osisp/OSiSP_part2/Laba_3/lesson_3/shared_lib/build/CMakeFiles/edit_cache.dir
-/home/paulatreides/Study/Osisp/OSiSP_part2/Laba_3/lesson_3/shared_lib/build/CMakeFiles/rebuild_cache.dir

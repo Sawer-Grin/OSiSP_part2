@@ -1,1 +1,0 @@
-/usr/bin/x86_64-w64-mingw32-g++ -fPIC -shared -Wl,-soname,libDynamicLibrary.so -o libDynamicLibrary.so CMakeFiles/DynamicLibrary.dir/library.cpp.o   -L/usr/x86_64-w64-mingw32/sys-root/mingw/lib 
