@@ -1,0 +1,9 @@
+﻿  Building 'ThirdDriver' with toolset 'WindowsKernelModeDriver10.0' and the 'Universal' target platform.
+  second_task.c
+  ThirdDriver.vcxproj -> C:\Users\Ilya\source\repos\ThirdDriver\x64\Debug\ThirdDriver.sys
+  Done Adding Additional Store
+  Successfully signed: C:\Users\Ilya\source\repos\ThirdDriver\x64\Debug\ThirdDriver.sys
+  
+  Driver is 'Universal'.
+  Inf2Cat task was skipped as there were no inf files to process
+  
